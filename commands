@@ -1,0 +1,19 @@
+192.168.1.72
+root
+student1
+
+mosquitto_sub -h 127.0.0.1 -p 1883 -t GB -u "IoT" -P "student1"
+mosquitto_pub -h 127.0.0.1 -p 1883 -t "GB" -m "Hello, GB!" -u "IoT" -P "student1"
+Hello, GB!
+
+sudo apt-get install libssl-dev
+
+git clone https://github.com/eclipse/paho.mqtt.c.git
+cd /путь до папки/paho.mqtt.c
+make
+
+sudo make install
+
+paho_c_sub -t my_topic --connection mqtt.eclipseprojects.io:1883
+
+paho_c_pub -t my_topic -m test --connection mqtt.eclipseprojects.io:1883
