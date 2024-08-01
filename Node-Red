@@ -1,0 +1,68 @@
+[
+    {
+        "id": "702656a.59f1a",
+        "type": "mqtt in",
+        "z": "6058c0e.47a8",
+        "name": "",
+        "topic": "/node-red/temp",
+        "qos": "2",
+        "broker": "989e620.4d236",
+        "x": 210,
+        "y": 160,
+        "wires": [
+            ["e62f97f.a88e9"]
+        ]
+    },
+    {
+        "id": "36c2f97f.a88e9",
+        "type": "function",
+        "z": "6058c0e.47a8",
+        "name": "Parse temperature",
+        "func": "msg.payload = parseFloat(msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 400,
+        "y": 160,
+        "wires": [
+            ["1836f31.9e239"]
+        ]
+    },
+    {
+        "id": "1836f31.9e239",
+        "type": "csv",
+        "z": "6058c0e.47a8",
+        "name": "",
+        "filename": "/home/pi/temperature.csv",
+        "appendNewline": true,
+        "append": false,
+        "separator": ",",
+        "columns": [
+            "temperature"
+        ],
+        "x": 600,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "989e620.4d236",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "MQTT broker",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]
