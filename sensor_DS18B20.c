@@ -1,72 +1,65 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
-// Функция для чтения температуры с датчика DS18B20 1-Wire
-float read_temperature() {
-    FILE *fp;
-    char path[100] = "/sys/bus/w1/devices/28-XXXXXXXXXXXX/w1_slave"; //28-XXXXXXXXXXXX - идентификатор датчика
-    char buf[256];
-    char *temp;
-    float temperature = 0.0;
-
-    // Открытие файла устройства датчика для чтения
-    fp = fopen(path, "r");
-    if (fp == NULL) {
-        perror("Ошибка открытия файла датчика");
-        return -1;
-    }
-
-    // Чтение содержимого файла
-    while (fgets(buf, sizeof(buf), fp)) {
-        // Поиск строки, содержащей температуру
-        temp = strstr(buf, "t=");
-        if (temp) {
-            // Преобразование строки с температурой в число
-            temperature = strtof(temp + 2, NULL) / 1000.0;
-            break;
-        }
-    }
-
-    fclose(fp);
-    return temperature;
-}
-
-void write_to_csv(float temperature) {
-    FILE *fp;
-    char filename[] = "temp.csv";
-    time_t now;
-    struct tm *now_tm;
-    int year, month, day, hour, minute;
-
-    now = time(NULL);
-    now_tm = localtime(&now);
-
-    year = now_tm->tm_year + 1900; // tm_year хранит количество лет с 1900
-    month = now_tm->tm_mon + 1;    // tm_mon хранит месяц от 0 до 11
-    day = now_tm->tm_mday;
-    hour = now_tm->tm_hour;
-    minute = now_tm->tm_min;
-
-    fp = fopen(filename, "a"); // Открытие файла для добавления данных
-    if (fp == NULL) {
-        perror("Ошибка открытия файла");
-        return;
-    }
-
-    // Запись данных в файл в формате dddd;mm;dd;hh;mm;temperature
-    fprintf(fp, "%04d;%02d;%02d;%02d;%02d;%d\n", year, month, day, hour, minute, (int)temperature);
-
-    fclose(fp);
-}
-
-
-int main() {
-    float temperature = read_temperature();
-    if (temperature != -1) {
-        //printf("Температура: %.3f°C\n", temperature); // дебаг для вывода температуры на консоль
-        write_to_csv(temperature);
-    }
-    return 0;
-}
+1.	#include <stdio.h>
+2.	#include <stdlib.h>
+3.	#include <string.h>
+4.	#include <unistd.h>
+5.	#include <errno.h>
+6.	#include <time.h>
+7.	#include <wiringPi.h>
+8.	#include <wiringPiI2C.h>
+9.	#include <onewire.h>
+10.	#include <ds18b20.h>
+11.	
+12.	#define ONE_WIRE_BUS 4
+13.	
+14.	int main(void)
+15.	{
+16.	    int i;
+17.	    int err;
+18.	    int devCount;
+19.	    int temperature;
+20.	    double celsius;
+21.	
+22.	    // Initialize the library
+23.	    if (wiringPiSetup() == -1) {
+24.	        fprintf(stderr, "wiringPiSetup failed: %s\n", strerror(errno));
+25.	        return 1;
+26.	    }
+27.	
+28.	    // Initialize the OneWire library
+29.	    if ((err = onewire_init(ONE_WIRE_BUS)) != 0) {
+30.	        fprintf(stderr, "onewire_init failed: %s\n", onewire_strerror(err));
+31.	        return 1;
+32.	    }
+33.	
+34.	    // Get the number of devices on the OneWire bus
+35.	    if ((err = onewire_get_dev_count(&devCount)) != 0) {
+36.	        fprintf(stderr, "onewire_get_dev_count failed: %s\n", onewire_strerror(err));
+37.	        return 1;
+38.	    }
+39.	
+40.	    // Loop through each device on the OneWire bus
+41.	    for (i = 0; i < devCount; i++) {
+42.	        // Search for the DS18B20 device
+43.	        if (ds18b20_search(i) != 0) {
+44.	            fprintf(stderr, "ds18b20_search failed: %s\n", ds18b20_strerror(err));
+45.	            return 1;
+46.	        }
+47.	
+48.	        // Read the temperature from the DS18B20 device
+49.	        if (ds18b20_read_temp(&temperature) != 0) {
+50.	            fprintf(stderr, "ds18b20_read_temp failed: %s\n", ds18b20_strerror(err));
+51.	            return 1;
+52.	        }
+53.	
+54.	        // Convert the temperature from integer to double
+55.	        celsius = (double)temperature / 1000.0;
+56.	
+57.	        // Print the temperature in Celsius
+58.	        printf("Temperature: %.1f C\n", celsius);
+59.	
+60.	        // Reset the search state
+61.	        ds18b20_reset_search();
+62.	    }
+63.	
+64.	    return 0;
+65.	}
